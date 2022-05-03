@@ -30,7 +30,14 @@ Redis Cluster则采用的是虚拟槽分区算法，在Redis中将存储空间�
 ##### 缓存节点的扩展和收缩  
 cluster meet 命令让新节点加入进来。  
 ![image](https://user-images.githubusercontent.com/35059921/166395956-f568c54d-6693-4c9b-836b-92aecbd604e9.png)  
-
+## 标签系统
+### 提高导入性能
+#### 调度服务Worker设计
+wokrker是将大的execl等文件拆分成小的文件并将这些小文件导入到mongo生成元数据，并将每条记录生成一个任务发送到消息队列。
+#### 消息队列设计
+消息队列采用redis stream，每个业务单独一个stream通道，一个stream设置一个消费者组，组内可设置多个消费者进行消费。
+#### 导入服务设计
+导入服务会通过一个协程池将任务再次分解，每个goroutine进行标签的生成的提取，最后讲结果汇聚到一个channel里面，同时写入mongo和redis。
 
 
 
