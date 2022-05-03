@@ -7,9 +7,30 @@
 ##### mysql读写分离
 一主多从的设计，读走从库，写走主库。对于拍卖这种特殊的场景，可以读写都走主库。
 ###### 主从延迟原因：
-（1）主库正在进行大事务操作，这时应该将大事务拆分成小事务，分批次提交。
-（2）主库正在进行DDL或DML操作，比如更改索引。这种操作应该放在负载低的时间段
-##### 主从复制的模式
-（1）异步复制
-（2）半同步复制：master更新操作写入binlog之后会主动通知slave，slave接收到之后写入relay log 即可应答，master只要收到至少一半ack应答，则会提交事务
-（3）同步复制：全同步复制必须收到所有从库的ack，才会提交事务
+（1）主库正在进行大事务操作，这时应该将大事务拆分成小事务，分批次提交。  
+（2）主库正在进行DDL或DML操作，比如更改索引。这种操作应该放在负载低的时间段  
+### MySQL高可用  
+#### 主从复制的模式
+（1）异步复制  
+（2）半同步复制：master更新操作写入binlog之后会主动通知slave，slave接收到之后写入relay log 即可应答，master只要收到至少一半ack应答，则会提交事务  
+（3）同步复制：全同步复制必须收到所有从库的ack，才会提交事务  
+#### 高可用方案
+(1) 主从或主主+Keepalived:  在主实例的 Keepalived 中，增加监测本机 MySQL 是否存活的脚本，如果监测 MySQL 挂了，就会重启 Keepalived，从而使 VIP 飘到从实例。  
+(2) MHA方案：MHA在监测到主实例无响应后，可以自动将同步最靠前的 Slave 提升为 Master，然后将其他所有的 Slave 重新指向新的 Master。  
+### redis高可用 
+#### redis哨兵模式
+redis使用一组哨兵（sentinel）节点来监控主从redis服务的可用性。一旦发现redis主节点失效，将选举出一个哨兵节点作为领导者（leader）。哨兵领导者再从剩余的从redis节点中选出一个redis节点作为新的主redis节点对外服务。  
+#### redis cluster  
+Redis Cluster则采用的是虚拟槽分区算法，在Redis中将存储空间分成了16384个槽，也就是说 Redis Cluster槽的范围是 0 -16383。在存储信息的时候，集群会对 Key 进行 CRC16 校验并对 16384 取模（slot = CRC16(key)%16383）。
+##### 查询数据  
+（1）未在做数据迁移, MOVED重定向请求：
+![image](https://user-images.githubusercontent.com/35059921/166395602-cdcd4b89-1549-4d6f-97e8-c58728c571aa.png)
+（2）正在做节点数据迁移，ASK重定向请求：
+![image](https://user-images.githubusercontent.com/35059921/166395695-44f47957-dd6a-495c-814b-87fb16f388f9.png)
+##### 缓存节点的扩展和收缩  
+cluster meet 命令让新节点加入进来。
+![image](https://user-images.githubusercontent.com/35059921/166395956-f568c54d-6693-4c9b-836b-92aecbd604e9.png)
+
+
+
+
