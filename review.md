@@ -38,6 +38,17 @@ wokrker是将大的execl等文件拆分成小的文件并将这些小文件导�
 消息队列采用redis stream，每个业务单独一个stream通道，一个stream设置一个消费者组，组内可设置多个消费者进行消费。
 #### 导入服务设计
 导入服务会通过一个协程池将任务再次分解，每个goroutine进行标签的生成的提取，最后讲结果汇聚到一个channel里面，同时写入mongo和redis。
+##### 为什么要双写
+mongo用于数据归档，redis用于数据查询。
+##### 双写如何保证数据一致
+只要mongo和redis一个写失败，就将数据放在redis stream里面进行重试。
+##### 多次写入如何保证数据不重复
+做幂等性保证，跟标签的唯一名称（提前生成mongo的唯一id，作为标签的id）
+#### mongo和redis高可用
+##### mongo高可用
+##### redis高可用
+（1）同一个区域   
+同一个区域，采用redis cluster,
 
 
 
